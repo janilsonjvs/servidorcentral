@@ -1,25 +1,27 @@
+#Por: Janilson Varela
+#Data: 12/07/2015
+#Servidor para registro de dominio
+
 require 'socket'
+server = TCPServer.new(2100)
 
-
-server = UDPSocket.new
-server.bind("",2100)
-
-puts "Servidor Iniciado"
+puts "Servidor de Registro iniciado."
 puts "Lista de Servidor(es) registrado(s)"
 f = File.new("ListaServers.txt")
 f.each {|line| print line}
 f.close
 msgREGOK = "REGOK"
-
+msgREGFALHA = "REGFALHA"
+msgIPFALHA = "IPFALHA"
+msgFALHA = "FALHA"
 
 loop{
-	data, sender = server.recvfrom(1024)
-	c_ip = sender[3]
-	c_porta = sender[1]
+	clientSocket =  server.accept
+	data = clientSocket.gets
 	arr = data.split
 	rge = false
 
-	if arr[0] == 'REG'
+	if arr[0] == 'REG' then
 		puts "Solicitacao de REG"
 
 		f1 = File.new("ListaServers.txt")
@@ -28,6 +30,7 @@ loop{
 
 			if dom[1] == arr[1]
 				puts "Dominio ja registrado!"	
+				clientSocket.puts(msgREGFALHA) 
 				rge = true
 				break
 			end
@@ -35,14 +38,36 @@ loop{
 		f1.close
 
 		if rge == false
-			f2 = File.new("ListaServers.txt","a+")
-			f2.puts data
-			f2.close
+			f1 = File.new("ListaServers.txt","a+")
+			f1.puts data
+			f1.close
 			puts "Dominio para registro: "+arr[1]
 			puts "IP do Dominio: "+arr[2]	
-			puts "IP Cliente: #{c_ip}"		
-			puts "Porta Cliente: #{c_porta}"		
-			#server.send(msgREGOK,c_ip, c_porta)
+			clientSocket.puts(msgREGOK) 
 		end
+
+
+	elsif arr[0] == 'IP' then
+		puts "Solicitacao de IP"
+
+		f1 = File.new("ListaServers.txt")
+		f1.each {|li|
+			dom = li.split
+
+			if dom[1] == arr[1]
+				rge = true
+				puts dom[2]
+				clientSocket.puts(dom[2].to_s) 
+				break
+			end
+		}
+		f1.close		
+
+		if rge == false
+			clientSocket.puts(msgIPFALHA) 
+		end
+	else
+		clientSocket.puts(msgFALHA) 
+		
 	end
 }
