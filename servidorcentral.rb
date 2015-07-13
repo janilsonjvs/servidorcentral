@@ -57,7 +57,7 @@ loop{
 			if dom[1] == arr[1]
 				rge = true
 				puts dom[2]
-				clientSocket.puts(dom[2].to_s) 
+				clientSocket.puts("IPOK "+dom[2].to_s) 
 				break
 			end
 		}
