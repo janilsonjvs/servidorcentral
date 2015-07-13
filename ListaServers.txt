@@ -1,3 +1,10 @@
 REG natal 10.0.0.1
 REG macau 192.168.1.1
 REG macaiba 192.168.1.5
+REG paraiba 10.0.1.28
+REG santos 192.168.10.1
+REG santoandre 192.168.5.5
+REG saocarlos 195.16.0.1
+REG pureza 10.6.6.5
+
+REG bentofernandes 10.6.6.50

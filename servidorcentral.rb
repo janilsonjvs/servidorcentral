@@ -9,6 +9,7 @@ puts "Lista de Servidor(es) registrado(s)"
 f = File.new("ListaServers.txt")
 f.each {|line| print line}
 f.close
+msgREGOK = "REGOK"
 
 
 loop{
@@ -38,8 +39,10 @@ loop{
 			f2.puts data
 			f2.close
 			puts "Dominio para registro: "+arr[1]
-			puts "IP do Dominio: "+arr[2]			
-			server.send("REGOK",c_ip, c_porta)
+			puts "IP do Dominio: "+arr[2]	
+			puts "IP Cliente: #{c_ip}"		
+			puts "Porta Cliente: #{c_porta}"		
+			#server.send(msgREGOK,c_ip, c_porta)
 		end
 	end
 }
