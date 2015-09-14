@@ -10,7 +10,7 @@ require 'sinatra'
 #para instalar "sinatra" - gem install sinatra
 
 def listadados(d)
-datas = Hash.new
+	datas = Hash.new
 	dbh	=	RDBI.connect(:SQLite3,	:database	=>	"dbcopas.db")
 	sth = dbh.execute('select PAIS.NOME, COPAS.ANO_COPA from REL_COPASPAIS R INNER JOIN COPAS ON COPAS.ID=R.ID_COPAS INNER JOIN PAIS ON PAIS.ID=COPAS.LOCAL WHERE R.ID_PAIS = ' + d.to_s)
 
@@ -21,10 +21,13 @@ datas = Hash.new
 	datas
 end
 
-def campeos(formato)
+def campeoes(formato)
 #Item 1 da lista: Lista todos os campeos	
 dbh	=	RDBI.connect(:SQLite3,	:database	=>	"dbcopas.db")
 rs	=	dbh.execute("SELECT PAIS.ID, PAIS.NOME, COPAS.ANO_COPA, PAIS.CONTINENTE FROM PAIS INNER JOIN REL_COPASPAIS R ON R.ID_PAIS = PAIS.ID INNER JOIN COPAS ON COPAS.ID=R.ID_COPAS GROUP BY PAIS.NOME")	
+f = File.new("campeoes.xml","wb")
+b = Builder::XmlMarkup.new(:target=>f,:indent=>2)
+b.instruct!
 list = Hash.new
 cont = Hash.new
 i = 1
@@ -37,7 +40,20 @@ i = 1
 		dbh.disconnect
 		j = JSON.generate(cont)
 	else
-
+		dbh2	=	RDBI.connect(:SQLite3,	:database	=>	"dbcopas.db")
+		b.campeos {|i| 
+  			rs.fetch(:all).each	do |row|
+				i.pais = row[1]
+				rscopas = dbh2.execute('select PAIS.NOME, COPAS.ANO_COPA from REL_COPASPAIS R INNER JOIN COPAS ON COPAS.ID=R.ID_COPAS INNER JOIN PAIS ON PAIS.ID=COPAS.LOCAL WHERE R.ID_PAIS = ' + row[0].to_s)
+				b.times {|j|
+					rscopas.fetch(:all).each do |r|
+				 		j.ano(r[1])
+				 	end
+				}
+			end
+		
+		}
+		f
 	end
 	
 end
@@ -61,7 +77,7 @@ def copasrealizadas(formato)
 		copasr['realizadas'] =  listacopaspais
 		j = JSON.generate(copasr)
 	else
-		
+
 	end
 	
 
@@ -99,9 +115,11 @@ prep	=	dbh.prepare('SELECT ANO_COPA, PAIS.NOME FROM COPAS INNER JOIN REL_COPASPA
 rs = prep.execute(nomepais.to_s.upcase)
 f = File.new("paissede.xml","wb")
 b = Builder::XmlMarkup.new(:target=>f,:indent=>2)
+b.instruct!
 lcopas = Hash.new
 anos = Hash.new
 i = 1
+xml = ''
 lcopas['paissede'] = nomepais.to_s.upcase
 	if formato.downcase == 'json'
 		rs.fetch(:all).each do |r|
@@ -111,10 +129,17 @@ lcopas['paissede'] = nomepais.to_s.upcase
 		lcopas['anos'] = anos
 		j = JSON.generate(lcopas)		
 	else
-		rs.fetch(:all).each do |r|
-			b.copas {|i| i.ano(r[0]); i.local(r[1])}
-		end
+		#rs.fetch(:all).each do |r|
+		#	b.copas {|i| i.ano(r[0])}
+		#end
 
+		b.copas {|i| 
+			rs.fetch(:all).each do |r|
+				i.ano(r[0])
+			end
+		}
+		f
+		
 	end
 	
 		
@@ -125,7 +150,8 @@ get '/paissede/json/:nome' do
 	paissede(params['nome'],'json')
 end
 get '/paissede/xml/:nome' do 
-	paissede(params['nome'],'xml')
+	content_type 'text/xml'
+	body paissede(params['nome'],'xml')
 
 end
 
@@ -134,23 +160,26 @@ get '/anoscampeao/json/:nome' do
 end
 
 get '/anoscampeao/xml/:nome' do 
+	content_type 'text/xml'
 	anoscampeao(params['nome'],'xml')
 end
 
 
 get '/copasrealizadas/json/' do 
-	copasrealizadas(xml)
+	copasrealizadas('json')
 end
 
 get '/copasrealizadas/xml/' do 
-	copasrealizadas(xml)
+	content_type 'text/xml'
+	copasrealizadas('xml')
 end
 
-get '/campeos/json/' do 
+get '/campeoes/json/' do 
 	campeos('json')
 end
 
 
-get '/campeos/xml/' do 
+get '/campeoes/xml/' do 
+	content_type 'text/xml'
 	campeos('xml')
 end
