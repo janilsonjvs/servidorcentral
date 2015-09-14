@@ -1,3 +1,0 @@
-REG natal 10.0.0.1
-REG macau 192.168.1.1
-REG quintas 192.168.1.2
